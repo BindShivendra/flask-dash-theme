@@ -1,0 +1,14 @@
+- In single-script applications, the application instance exists in the global scope, 
+    so routes can be easily defined using the app.route decorator. But now that the 
+    application is created at runtime, the app.route decorator begins 
+    to exist only after create_app() is invoked, which is too late. Custom error page 
+    handlers present the same problem, as these are defined with the app.errorhandler 
+    decorator. 
+
+-  A blueprint is similar to an application in that it can also define routes and error 
+    handlers. The difference is that when these are defined in a blueprint they are in a 
+    dormant state until the blueprint is registered with an application, at which point 
+    they become part of it. Using a blueprint defined in the global scope, the routes and 
+    error handlers of the application can be defined in almost the same way as in the single-script 
+    application
+
