@@ -14,10 +14,14 @@
     <!-- Custom fonts for this template-->
     <link href="{{ url_for('static', filename='vendors/fontawesome-free/css/all.min.css') }}" rel="stylesheet"
         type="text/css">
+
+    <link href="{{ url_for('static', filename='vendors/jexcel/jexcel.css') }}" rel="stylesheet" type="text/css">
+    <link href="{{ url_for('static', filename='vendors/jexcel/jsuites.css') }}" rel="stylesheet" type="text/css">
     <link
         href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i"
         rel="stylesheet">
-
+    <script src="{{ url_for('static', filename='vendors/jexcel/jexcel.js') }}"></script>
+    <script src="{{ url_for('static', filename='vendors/jexcel/jsuites.js') }}"></script>
     <!-- Custom styles for this template-->
     <link href="{{ url_for('static', filename='css/admin.min.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/styles.css') }}" rel="stylesheet">
@@ -90,6 +94,7 @@
                         <a class="collapse-item" href="{{ url_for('theme.colours') }}">Colors</a>
                         <a class="collapse-item" href="{{ url_for('theme.borders') }}">Borders</a>
                         <a class="collapse-item" href="{{ url_for('theme.animations') }}">Animations</a>
+                        <a class="collapse-item" href="{{ url_for('theme.jexcel') }}">Jexcel</a>
                         <a class="collapse-item" href="{{ url_for('theme.others') }}">Other</a>
                     </div>
                 </div>

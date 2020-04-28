@@ -70,3 +70,8 @@ def tables():
 @theme_bp.route('/404')
 def page_not_found():
     return render_template('theme/404.html')
+
+
+@theme_bp.route('/jexcel')
+def jexcel():
+    return render_template('theme/jexcel.html')
