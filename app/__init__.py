@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, url_for
 from flask_bootstrap import Bootstrap
 from flask_mail import Mail
 from flask_moment import Moment
@@ -27,6 +27,8 @@ def create_app(config_name):
 
     # routes/views
     from .main import bp as main_bp
+    from .theme import theme_bp
     app.register_blueprint(main_bp)
+    app.register_blueprint(theme_bp)
 
     return app
