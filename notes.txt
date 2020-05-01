@@ -12,3 +12,27 @@
     error handlers of the application can be defined in almost the same way as in the single-script 
     application
 
+- Flask context globals
+    current_app :: Application context :: The application instance for the active application.
+    g           :: Application context :: An object that the application can use for temporary storage during the 
+                                            handling of a request. This variable is reset with each request. 
+    request     :: Request context     :: The request object, which encapsulates the contents of an HTTP request 
+                                            sent by the client. 
+    session     :: Request context     :: The user session, a dictionary that the application can use to store 
+                                            values that are “remembered” between requests.
+    If any of these variables are accessed without an active application or request context, an error is generated
+
+- Request hooks
+    before_request 
+        Registers a function to run before each request.
+    before_first_request 
+        Registers a function to run only before the first request is handled. This can be a convenient way to add server initialization tasks.
+    after_request 
+        Registers a function to run after each request, but only if no unhandled exceptions occurred.
+    teardown_request 
+        Registers a function to run after each request, even if unhandled exceptions occurred
+
+- it is considered good practice for web applications to never leave a POST request as the last request sent 
+    by the browser. This is achieved by responding to POST requests with a redirect instead of a normal response
+    Store form data in session variable
+

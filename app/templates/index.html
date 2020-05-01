@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Dash{% endblock %}
+
+{% block navbar %}
+<div class="container">
+    <nav class="nav">
+        <a class="nav-link active" href="{{url_for('main.main')}}">Home</a>
+        <a class="nav-link" href="{{url_for('theme.main')}}">Theme</a>
+    </nav>
+</div>
+{% endblock %}
+
+{% block page_content %}
+<h5>Edit templates\index.html to start </h5>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{{ moment.include_moment() }}
+{% endblock %}
