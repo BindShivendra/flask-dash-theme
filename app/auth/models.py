@@ -2,9 +2,17 @@ from flask import current_app
 from app import db
 from itsdangerous import TimedJSONWebSignatureSerializer as Token
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_login import UserMixin
+from flask_login import UserMixin, AnonymousUserMixin
 
 from app import login_manager
+
+
+class Permission:
+    FOLLOW = 1
+    COMMENT = 2
+    WRITE = 4
+    MODERATE = 8
+    ADMIN = 16
 
 
 class Role(db.Model):
@@ -12,7 +20,50 @@ class Role(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), unique=True)
-    users = db.relationship('User', backref='role')
+    default = db.Column(db.Boolean, default=False, index=True)
+    permission = db.Column(db.Integer)
+    users = db.relationship('User', backref='role', lazy='dynamic')
+
+    def __init__(self, **kwargs):
+        super(Role, self).__init__(**kwargs)
+        if self.permission is None:
+            self.permission = 0
+
+    def add_permission(self, perm):
+        if not self.has_permission(perm):
+            self.permission += perm
+
+    def remove_permission(self, perm):
+        if self.has_permission(perm):
+            self.permission -= perm
+
+    def reset_permission(self):
+        self.permission = 0
+
+    def has_permission(self, perm):
+        return self.permission & perm == perm
+
+    @staticmethod
+    def insert_roles():
+        roles = {
+            'User': [Permission.FOLLOW, Permission.WRITE, Permission.COMMENT],
+            'Moderator': [Permission.FOLLOW, Permission.COMMENT, Permission.WRITE,
+                          Permission.MODERATE],
+            'Admin': [Permission.FOLLOW, Permission.COMMENT, Permission.WRITE,
+                      Permission.MODERATE, Permission.ADMIN]
+        }
+
+        default_role = 'User'
+        for role in roles:
+            r = Role.query.filter_by(name=role).first()
+            if r is None:
+                r = Role(name=role)
+            r.reset_permission()
+            for perm in roles[role]:
+                r.add_permission(perm)
+            r.default = (r.name == default_role)
+            db.session.add(r)
+        db.session.commit()
 
     def __repr__(self):
         return f'Role("{self.name}")'
@@ -27,6 +78,14 @@ class User(UserMixin, db.Model):
     password_has = db.Column(db.String(128))
     email = db.Column(db.String(64), unique=True, index=True)
     confirmed = db.Column(db.Boolean, default=False)
+
+    def __init__(self, **kwargs):
+        super(User, self).__init__(**kwargs)
+        if self.role is None:
+            if self.email == current_app.config['ADMIN']:
+                self.role = Role.query.filter_by(name='Admin').first()
+            if self.role is None:
+                self.role = Role.query.filter_by(default=True).first()
 
     @property
     def password(self):
@@ -47,7 +106,7 @@ class User(UserMixin, db.Model):
         t = Token(current_app.config['SECRET_KEY'])
         try:
             data = t.loads(token.encode('utf-8'))
-        except:
+        except Exception:
             return False
         if data.get('token') != self.id:
             return False
@@ -65,7 +124,7 @@ class User(UserMixin, db.Model):
         t = Token(current_app.config['SECRET_KEY'])
         try:
             data = t.loads(new_password.encode('utf-8'))
-        except:
+        except Exception:
             return False
         user = User.query.get(data.get('reset'))
         if user is None:
@@ -86,7 +145,7 @@ class User(UserMixin, db.Model):
         t = Token(current_app.config['SECRET_KEY'])
         try:
             data = t.loads(token.encode('utf-8'))
-        except:
+        except Exception:
             return False
         if data.get('change_email') != self.id:
             return False
@@ -96,11 +155,29 @@ class User(UserMixin, db.Model):
         db.session.add(self)
         return True
 
+    # check permissions
+    def can(self, perm):
+        return self.role is not None and self.role.has_permission(perm)
+
+    def is_admin(self):
+        return self.can(Permission.ADMIN)
+
     def __repr__(self):
         return f'User("{self.username}")'
     #  User(email='john@example.com', username='john', password='thispass')
 
 
+class AnonymousUser(AnonymousUserMixin):
+    def can(self, perm):
+        return False
+
+    def is_admin(self):
+        return False
+
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
+
+login_manager.anonymous_user = AnonymousUser
