@@ -1,3 +1,4 @@
+from local_settings import LocalConfig
 import os
 
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -25,8 +26,16 @@ class Config:
 class DevelopmentConfig(Config):
     DEBUG = True
     SQLALCHEMY_DATABASE_URI = os.environ.get(
-        'DEV_DATABASE_URL') or os.path.join(basedir, 'dev.sqlite')
+        'DEV_DATABASE_URL') or 'sqlite:///' + os.path.join(basedir, 'dev.sqlite')
     LOG_TO_STDOUT = True
+    MAIL_SERVER = LocalConfig.EMAIL_HOST
+    MAIL_PORT = LocalConfig.EMAIL_PORT
+    MAIL_USE_TLS = LocalConfig.EMAIL_USE_TLS
+    MAIL_USERNAME = LocalConfig.EMAIL_HOST_USER
+    MAIL_PASSWORD = LocalConfig.SENDGRID_API_KEY
+    MAIL_DEFAULT_SENDER = LocalConfig.MAIL_DEFAULT_SENDER
+    MAIL_SUBJECT_PREFIX = '[Dash]'
+    MAIL_SENDER = 'Dash Admin <dash@email.com>'
 
 
 class TestConfig(Config):
@@ -34,6 +43,7 @@ class TestConfig(Config):
     SQLALCHEMY_DATABASE_URI = os.environ.get(
         'TEST_DATABASE_URL') or 'sqlite://'  # DB not required
     LOG_TO_STDOUT = True
+    WTF_CSRF_ENABLED = False
 
 
 class ProductionConfig(Config):

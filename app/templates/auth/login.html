@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+{% block title %}Dash -Login{% endblock %}
+{% block navbar %}
+<div class="container">
+    <ul class="nav navbar-nav navbar-right">
+        {% if current_user.is_authenticated %}
+        <li><a href="{{ url_for('auth.logout') }}">Log Out</a></li>
+        {% else %}
+        <li><a href="{{ url_for('auth.login') }}">Log In</a></li>
+        {% endif %}
+    </ul>
+</div>
+
+{% endblock %}
+
+{% block page_content %}
+
+<div class="row">
+    <div class="col-md-3"></div>
+    <div class="col-md-6">
+        <div class="page-header">
+            <h1>Login</h1>
+        </div>
+        <div>
+            {{ wtf.quick_form(form) }}
+        </div>
+    </div>
+    <div class="col-md-3"></div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{{ moment.include_moment() }}
+{% endblock %}

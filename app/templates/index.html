@@ -13,7 +13,13 @@
 
 {% block page_content %}
 <h5>Edit templates\index.html to start </h5>
+{% if current_user.is_authenticated %}
+{{ current_user.username }}
+{% else %}
+Stranger
+{% endif %}!
 {% endblock %}
+
 
 {% block scripts %}
 {{ super() }}
