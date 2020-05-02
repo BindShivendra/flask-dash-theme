@@ -1,3 +1,4 @@
+from datetime import datetime
 from flask import current_app
 from app import db
 from itsdangerous import TimedJSONWebSignatureSerializer as Token
@@ -78,6 +79,7 @@ class User(UserMixin, db.Model):
     password_has = db.Column(db.String(128))
     email = db.Column(db.String(64), unique=True, index=True)
     confirmed = db.Column(db.Boolean, default=False)
+    profile = db.relationship("Profile", uselist=False, backref="User")
 
     def __init__(self, **kwargs):
         super(User, self).__init__(**kwargs)
@@ -86,6 +88,8 @@ class User(UserMixin, db.Model):
                 self.role = Role.query.filter_by(name='Admin').first()
             if self.role is None:
                 self.role = Role.query.filter_by(default=True).first()
+        if self.profile is None:
+            self.profile = Profile(user_id=self.id)
 
     @property
     def password(self):
@@ -181,3 +185,24 @@ def load_user(user_id):
 
 
 login_manager.anonymous_user = AnonymousUser
+
+
+class Profile(db.Model):
+    __tablename__ = 'profiles'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    name = db.Column(db.String(64))
+    location = db.Column(db.String(64))
+    about_me = db.Column(db.Text())
+    member_since = db.Column(db.DateTime(), default=datetime.utcnow)
+    last_seen = db.Column(db.DateTime(), default=datetime.utcnow)
+    profile_image = db.Column(db.String(128))
+
+    def __repr__(self):
+        return f'Profile( "{self.name}" )'
+
+    def ping(self):
+        self.last_seen = datetime.utcnow()
+        db.session.add(self)
+        db.session.commit()

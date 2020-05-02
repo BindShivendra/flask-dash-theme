@@ -1,5 +1,7 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, BooleanField, SubmitField
+from flask_wtf.file import FileField
+from wtforms import StringField, PasswordField, BooleanField, \
+    SubmitField, TextAreaField
 from wtforms.validators import Email, DataRequired, Length, Regexp, EqualTo
 from wtforms import ValidationError
 
@@ -76,3 +78,11 @@ class EmailChangeForm(FlaskForm):
     def validate_email(self, field):
         if User.query.filter_by(email=field.data).first():
             raise ValidationError('Email already registered')
+
+
+class EditProfileForm(FlaskForm):
+    name = StringField('Name ', validators=[Length(1, 64)])
+    location = StringField('Location', validators=[Length(0, 64)])
+    about_me = TextAreaField('About me')
+    profile_image = FileField('Profile Image')
+    submit = SubmitField('Submit')

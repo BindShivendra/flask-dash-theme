@@ -1,22 +1,29 @@
 from flask import render_template, url_for, \
-    redirect, request, flash, current_app
+    redirect, request, flash, current_app, \
+    abort, send_file
 from flask_login import login_user, logout_user, login_required, current_user
+
 
 from dash import db
 from . import auth
-from .models import User
+from .models import User, Profile
 from .forms import LoginForm, RegistrationForm, EmailChangeForm, \
-    PasswordChangeForm, PasswordResetRequestForm, PasswordResetForm
+    PasswordChangeForm, PasswordResetRequestForm, PasswordResetForm, \
+    EditProfileForm
 from ..email import send_email
+from .utils import allowed_file, resize_image_and_save
 
 
 @auth.before_app_request
 def before_app_request():
-    if current_user.is_authenticated \
-            and not current_user.confirmed \
-            and request.blueprint != 'auth' \
-            and request.endpoint != 'static':
-        return redirect(url_for('auth.unconfirmed'))
+    if current_user.is_authenticated:
+        if current_user.profile:
+            profile = Profile.query.filter_by(user_id=current_user.id).first()
+            profile.ping()
+        if not current_user.confirmed \
+                and request.blueprint != 'auth' \
+                and request.endpoint != 'static':
+            return redirect(url_for('auth.unconfirmed'))
 
 
 @auth.route('/login', methods=['GET', 'POST'])
@@ -170,3 +177,53 @@ def change_email(token):
     else:
         flash('Invalid request.')
     return redirect(url_for('main.main'))
+
+
+@auth.route('/user/<username>')
+@login_required
+def profile(username):
+    user = User.query.filter_by(username=username).first_or_404()
+    return render_template('auth/profile.html', user=user)
+
+
+@auth.route('/edit-profile', methods=['GET', 'Post'])
+@login_required
+def edit_profile():
+    form = EditProfileForm()
+    if form.validate_on_submit():
+        profile = current_user.profile
+        profile.name = form.name.data
+        profile.location = form.location.data
+        profile.about_me = form.about_me.data
+        image = form.profile_image.data
+        current_app.logger.info(image.filename)
+        if image is not None and image != '':
+            if not allowed_file(image.filename):
+                flash("Please upload 'webp', 'png', 'jpg', 'jpeg' and 'gif' only")
+                return redirect(url_for('auth.edit_profile'))
+            try:
+                profile.profile_image = resize_image_and_save(
+                    image, current_app.config['UPLOAD_FOLDER'], current_user.username)
+            except Exception as e:
+                current_app.logger.info(f'image uploaed failed {e}')
+                abort(500)
+                # TODO : handle exception
+
+        db.session.add(current_user._get_current_object())
+        db.session.commit()
+        flash('Update sucess')
+        return redirect(url_for('auth.profile', username=current_user.username))
+    if current_user.profile is not None:
+        form.name.data = current_user.profile.name
+        form.location.data = current_user.profile.location
+        form.about_me.data = current_user.profile.about_me
+
+    return render_template('auth/edit_profile.html', form=form)
+
+
+@auth.route('/media')
+def media():
+    image = current_user.profile.profile_image or None
+    if image:
+        return send_file(image)
+    return None

@@ -17,6 +17,8 @@ class Config:
     MAIL_SENDER = 'Dash Admin <dash@example.com>'
     ADMIN = os.environ.get('ADMIN')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    UPLOAD_FOLDER = os.path.join(basedir, 'app', 'media')
+    ALLOWED_EXTENSIONS = {'webp', 'png', 'jpg', 'jpeg', 'gif'}
 
     @staticmethod
     def init_app(app):
